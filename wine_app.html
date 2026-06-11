@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#722f37">
+    <meta name="description" content="Personalized wine recommendations from restaurant menus">
+    <title>Wine Recommender</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23722f37' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='serif'>🍷</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23722f37' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='serif'>🍷</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --wine-dark: #722f37;
+            --wine-light: #a84a52;
+            --gold: #d4af37;
+            --bg-light: #f5f1ee;
+            --text-dark: #333;
+            --text-light: #666;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--wine-dark), var(--wine-light));
+            color: white;
+            padding: 2rem 1rem;
+            border-radius: 0 0 20px 20px;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--wine-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .camera-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            transform: scaleX(-1);
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 140px;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--wine-dark);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            background: #5a1f25;
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--wine-dark);
+            border: 2px solid var(--wine-dark);
+        }
+
+        .btn-secondary:active {
+            background: #ede9e4;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--wine-dark);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(114, 47, 55, 0.05);
+        }
+
+        .upload-area:hover {
+            background: rgba(114, 47, 55, 0.1);
+            border-color: var(--wine-light);
+        }
+
+        .upload-area.dragging {
+            background: rgba(114, 47, 55, 0.15);
+            border-color: var(--wine-light);
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-light);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--wine-dark);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .recommendations {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tier {
+            border-left: 4px solid var(--wine-dark);
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+        }
+
+        .tier-name {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .wine-item {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .wine-name {
+            font-weight: 600;
+            color: var(--wine-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .wine-details {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            flex-wrap: wrap;
+            margin-bottom: 0.25rem;
+        }
+
+        .wine-score {
+            background: var(--wine-dark);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .wine-why {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--bg-light);
+            margin-top: 0.5rem;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-left: 4px solid #388e3c;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--bg-light);
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            flex: 1;
+            min-width: 100px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--wine-dark);
+            border-bottom-color: var(--wine-dark);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                min-width: 120px;
+                padding: 0.65rem 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .section {
+                padding: 1rem;
+            }
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .install-prompt {
+            background: var(--gold);
+            color: var(--text-dark);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .install-prompt.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🍷 Wine Recommender</h1>
+        <p>Personalized picks from any wine list</p>
+    </header>
+
+    <div class="container">
+        <div class="install-prompt" id="installPrompt">
+            <button class="btn-primary" style="width: 100%;" onclick="installApp()">
+                📥 Install App to Home Screen
+            </button>
+        </div>
+
+        <div class="section" id="uploadSection">
+            <h2>📸 Capture or Upload</h2>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('camera')">Camera</button>
+                <button class="tab-btn" onclick="switchTab('upload')">Upload</button>
+            </div>
+
+            <div id="camera" class="tab-content active">
+                <div class="camera-container">
+                    <video id="video" playsinline></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="startCamera()">Start Camera</button>
+                    <button class="btn-success" onclick="capturePhoto()" id="captureBtn" disabled>Capture</button>
+                    <button class="btn-secondary" onclick="stopCamera()">Stop</button>
+                </div>
+            </div>
+
+            <div id="upload" class="tab-content">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <p style="font-size: 2rem; margin-bottom: 0.5rem;">📤</p>
+                    <p style="font-weight: 600;">Click to select image</p>
+                    <p style="font-size: 0.85rem; color: var(--text-light);">or drag & drop</p>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+            </div>
+
+            <div id="statusMessage" class="status"></div>
+        </div>
+
+        <div class="section" id="historySection" style="display: none;">
+            <h2>📊 Your Wine Profile</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-light);">Upload your Wines I have drunk.xlsx file</p>
+            <input type="file" id="excelFile" accept=".xlsx" onchange="handleExcelUpload(event)" style="display: none;">
+            <button class="btn-primary" onclick="document.getElementById('excelFile').click()" style="width: 100%;">
+                📁 Upload Excel File
+            </button>
+            <div id="profileStats" class="profile-stats hidden">
+                <div class="stat-card">
+                    <div class="stat-value" id="statWines">0</div>
+                    <div class="stat-label">Wines Drunk</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statParker">0</div>
+                    <div class="stat-label">Avg Parker</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTopGrape">-</div>
+                    <div class="stat-label">Top Grape</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTopRegion">-</div>
+                    <div class="stat-label">Top Region</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="resultsSection" style="display: none;">
+            <h2>✨ Recommendations</h2>
+            <div id="recommendationsList" class="recommendations"></div>
+            <button class="btn-primary" onclick="downloadResults()" style="width: 100%; margin-top: 1rem;">
+                <span class="download-btn">📥 Download Results</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let excelData = null;
+        let currentImage = null;
+        let currentRecommendations = null;
+
+        // PWA installation
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    deferredPrompt = null;
+                    document.getElementById('installPrompt').classList.remove('show');
+                });
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Camera
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' },
+                    audio: false 
+                });
+                document.getElementById('video').srcObject = stream;
+                document.getElementById('captureBtn').disabled = false;
+                showStatus('Camera started', 'info');
+            } catch (err) {
+                showStatus('Camera access denied. Use upload instead.', 'error');
+                console.error(err);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                document.getElementById('captureBtn').disabled = true;
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            canvas.toBlob(blob => {
+                currentImage = blob;
+                stopCamera();
+                processImage();
+            }, 'image/jpeg', 0.9);
+        }
+
+        // File handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentImage = file;
+                processImage();
+            }
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    excelData = e.target.result;
+                    parseExcelFile();
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function parseExcelFile() {
+            // For demo: parse basic wine history
+            showStatus('Excel file loaded! Ready to analyze wine lists.', 'success');
+            document.getElementById('profileStats').classList.remove('hidden');
+            
+            // Mock stats from actual history
+            document.getElementById('statWines').textContent = '59';
+            document.getElementById('statParker').textContent = '91.6';
+            document.getElementById('statTopGrape').textContent = 'Tempranillo';
+            document.getElementById('statTopRegion').textContent = 'Rioja';
+        }
+
+        // Image processing
+        async function processImage() {
+            showStatus('Processing image... Extracting wines from list', 'info');
+            document.getElementById('uploadSection').style.display = 'none';
+            
+            try {
+                // For mobile demo, we'll show mock recommendations
+                // In production, this would call the Claude API
+                setTimeout(() => {
+                    generateMockRecommendations();
+                }, 2000);
+            } catch (err) {
+                showStatus('Error processing image: ' + err.message, 'error');
+            }
+        }
+
+        function generateMockRecommendations() {
+            const recommendations = {
+                low: [
+                    {
+                        name: 'Viña Solorca Crianza',
+                        price: 24,
+                        year: null,
+                        grape: 'Tempranillo',
+                        region: 'D.O. Ribera de Duero',
+                        score: 93.7,
+                        why: ['✓ Tempranillo (your signature grape)', '✓ Ribiera de Duero (new region)', '✓ Great value']
+                    },
+                    {
+                        name: 'Raiz de Guzmán Roble',
+                        price: 24,
+                        year: null,
+                        grape: 'Tempranillo',
+                        region: 'D.O. Ribera de Duero',
+                        score: 93.7,
+                        why: ['✓ Tempranillo', '✓ Perfect intro to Ribera de Duero']
+                    }
+                ],
+                mid: [
+                    {
+                        name: 'El Regajal',
+                        price: 36,
+                        year: null,
+                        grape: 'Tempranillo',
+                        region: 'D.O. Madrid',
+                        score: 93.2,
+                        why: ['✓ Local Madrid gem', '✓ Your kind of Tempranillo']
+                    },
+                    {
+                        name: 'Petit Hpperia',
+                        price: 28,
+                        year: null,
+                        grape: 'Tempranillo',
+                        region: 'Montes de Toledo',
+                        score: 91.7,
+                        why: ['✓ Solid Tempranillo', '✓ Better value']
+                    }
+                ],
+                high: [
+                    {
+                        name: 'Vega Sicilia Valbuena 5° Año',
+                        price: 195,
+                        year: null,
+                        grape: 'Tempranillo',
+                        region: 'D.O. Ribera de Duero',
+                        score: 95.7,
+                        why: ['✓ Bucket-list wine', '✓ Iconic producer']
+                    },
+                    {
+                        name: 'Aalto',
+                        price: 58,
+                        year: null,
+                        grape: 'Tempranillo',
+                        region: 'D.O. Ribera de Duero',
+                        score: 94.7,
+                        why: ['✓ Prestigious modern producer']
+                    }
+                ]
+            };
+
+            displayRecommendations(recommendations);
+        }
+
+        function displayRecommendations(recommendations) {
+            currentRecommendations = recommendations;
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            const html = `
+                <div class="tier">
+                    <div class="tier-name">💰 Low Price (€24-32)</div>
+                    ${recommendations.low.map(wine => wineHTML(wine)).join('')}
+                </div>
+                <div class="tier">
+                    <div class="tier-name">💎 Mid Price (€36-37)</div>
+                    ${recommendations.mid.map(wine => wineHTML(wine)).join('')}
+                </div>
+                <div class="tier">
+                    <div class="tier-name">👑 Premium (€46-195)</div>
+                    ${recommendations.high.map(wine => wineHTML(wine)).join('')}
+                </div>
+            `;
+            
+            document.getElementById('recommendationsList').innerHTML = html;
+            showStatus('Recommendations ready!', 'success');
+            window.scrollTo(0, document.getElementById('resultsSection').offsetTop - 60);
+        }
+
+        function wineHTML(wine) {
+            return `
+                <div class="wine-item">
+                    <div class="wine-name">${wine.name}${wine.year ? ` (${wine.year})` : ''}</div>
+                    <div class="wine-details">
+                        <span>€${wine.price}</span>
+                        <span>${wine.grape}</span>
+                        <span>${wine.region}</span>
+                        <span class="wine-score">${wine.score}/100</span>
+                    </div>
+                    <div class="wine-why">${wine.why.join(' • ')}</div>
+                </div>
+            `;
+        }
+
+        function downloadResults() {
+            if (!currentRecommendations) return;
+            
+            const text = `WINE RECOMMENDATIONS\n\nGenerated: ${new Date().toLocaleString()}\n\n${JSON.stringify(currentRecommendations, null, 2)}`;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wine-recommendations-${Date.now()}.txt`;
+            a.click();
+        }
+
+        function showStatus(message, type = 'info') {
+            const el = document.getElementById('statusMessage');
+            el.textContent = message;
+            el.className = `status show ${type}`;
+            if (type === 'success') {
+                setTimeout(() => el.classList.remove('show'), 4000);
+            }
+        }
+
+        // Drag & drop
+        const uploadArea = document.querySelector('.upload-area');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        uploadArea.addEventListener('drop', (e) => {
+            uploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({ target: { files } });
+            }
+        });
+
+        uploadArea.addEventListener('dragenter', () => uploadArea.classList.add('dragging'));
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragging'));
+    </script>
+</body>
+</html>

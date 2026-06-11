@@ -1,0 +1,60 @@
+{
+  "name": "Wine Recommender",
+  "short_name": "WineRec",
+  "description": "Personalized wine recommendations from any restaurant wine list",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#722f37",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23722f37' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='serif'>🍷</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%23722f37' width='512' height='512'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='300' font-weight='bold' fill='%23fff' font-family='serif'>🍷</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f1ee' width='540' height='720'/><rect fill='%23722f37' width='540' height='200'/><text x='270' y='100' text-anchor='middle' font-size='60' fill='%23fff' font-family='serif'>🍷</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Capture Wine List",
+      "short_name": "Capture",
+      "description": "Take a photo of a wine list to get recommendations",
+      "url": "/?mode=camera",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%23722f37' width='96' height='96' rx='20'/><text x='48' y='48' text-anchor='middle' dominant-baseline='middle' font-size='60' fill='%23fff'>📸</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Upload Wine History",
+      "short_name": "Profile",
+      "description": "Upload your wine history to personalize recommendations",
+      "url": "/?mode=profile",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%23722f37' width='96' height='96' rx='20'/><text x='48' y='48' text-anchor='middle' dominant-baseline='middle' font-size='60' fill='%23fff'>📊</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}
