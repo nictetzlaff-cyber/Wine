@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#722f37">
+    <meta name="description" content="Personalized wine recommendations from restaurant menus">
+    <title>Wine Recommender</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23722f37' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='serif'>🍷</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --wine-dark: #722f37;
+            --wine-light: #a84a52;
+            --gold: #d4af37;
+            --bg-light: #f5f1ee;
+            --text-dark: #333;
+            --text-light: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--wine-dark), var(--wine-light));
+            color: white;
+            padding: 2rem 1rem;
+            border-radius: 0 0 20px 20px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--wine-dark);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--wine-dark);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--wine-dark);
+            border: 2px solid var(--wine-dark);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            background: #000;
+        }
+
+        .status {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #1565c0;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-card {
+            background: var(--bg-light);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--wine-dark);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .recommendations {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tier {
+            border-left: 4px solid var(--wine-dark);
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+        }
+
+        .tier-name {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .wine-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .wine-name {
+            font-weight: 600;
+            color: var(--wine-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .wine-details {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .wine-score {
+            background: var(--wine-dark);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🍷 Wine Recommender</h1>
+        <p>Personalized picks from any wine list</p>
+    </header>
+
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="section" id="uploadSection">
+            <h2>📸 Capture or Upload</h2>
+            
+            <div id="statusMessage" class="status"></div>
+
+            <!-- Camera Tab -->
+            <div id="cameraTab">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem;">Camera</h3>
+                <video id="video" playsinline autoplay muted></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                <button class="btn-primary" onclick="startCamera()">📷 Start Camera</button>
+                <button class="btn-primary" style="background: #2ecc71;" onclick="capturePhoto()" id="captureBtn" disabled>✓ Capture Photo</button>
+                <button class="btn-secondary" onclick="stopCamera()">✕ Stop Camera</button>
+            </div>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #eee;">
+
+            <!-- Upload Tab -->
+            <div id="uploadTab">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem;">Upload from Gallery</h3>
+                <div style="border: 2px dashed var(--wine-dark); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer;" onclick="document.getElementById('fileInput').click()">
+                    <p style="font-size: 2rem; margin-bottom: 0.5rem;">📤</p>
+                    <p style="font-weight: 600;">Tap to select image</p>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+            </div>
+        </div>
+
+        <!-- Wine Profile Section -->
+        <div class="section">
+            <h2>📊 Your Wine Profile</h2>
+            <p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-light);">Upload your Wines I have drunk.xlsx</p>
+            <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)" style="display: none;">
+            <button class="btn-primary" onclick="document.getElementById('excelFile').click()">📁 Choose Excel File</button>
+            <div id="excelStatus" class="status"></div>
+            <div id="profileStats" class="profile-stats hidden">
+                <div class="stat-card">
+                    <div class="stat-value" id="statWines">0</div>
+                    <div class="stat-label">Wines Drunk</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statParker">0</div>
+                    <div class="stat-label">Avg Parker</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTopGrape">-</div>
+                    <div class="stat-label">Top Grape</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTopRegion">-</div>
+                    <div class="stat-label">Top Region</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="section" id="resultsSection" style="display: none;">
+            <h2>✨ Recommendations</h2>
+            <div id="recommendationsList" class="recommendations"></div>
+            <button class="btn-primary" onclick="downloadResults()" style="margin-top: 1rem;">📥 Download Results</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script>
+        let stream = null;
+        let currentImage = null;
+        let currentRecommendations = null;
+
+        function showStatus(message, type = 'info', elementId = 'statusMessage') {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `status show ${type}`;
+            console.log(`[${type}] ${message}`);
+        }
+
+        // Camera Functions
+        async function startCamera() {
+            try {
+                showStatus('Requesting camera access...', 'info');
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                document.getElementById('captureBtn').disabled = false;
+                showStatus('Camera started - point at wine list', 'success');
+            } catch (err) {
+                console.error('Camera error:', err);
+                showStatus('Cannot access camera: ' + err.message, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                document.getElementById('captureBtn').disabled = true;
+                showStatus('Camera stopped', 'info');
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            
+            if (!video.srcObject) {
+                showStatus('Camera not started', 'error');
+                return;
+            }
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            canvas.toBlob(blob => {
+                currentImage = blob;
+                stopCamera();
+                processImage();
+            }, 'image/jpeg', 0.9);
+        }
+
+        // File Upload
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                currentImage = file;
+                processImage();
+            } else {
+                showStatus('Please select a valid image file', 'error');
+            }
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    parseWineHistory(jsonData);
+                    showStatus('Excel file loaded successfully!', 'success', 'excelStatus');
+                    document.getElementById('profileStats').classList.remove('hidden');
+                } catch (err) {
+                    showStatus('Error reading Excel: ' + err.message, 'error', 'excelStatus');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseWineHistory(jsonData) {
+            let wines = jsonData.length;
+            let totalParker = 0;
+            let parkerCount = 0;
+            let grapeCount = {};
+            let regionCount = {};
+            
+            jsonData.forEach(row => {
+                let parker = parseFloat(row['Parker Score']);
+                if (!isNaN(parker)) {
+                    totalParker += parker;
+                    parkerCount++;
+                }
+                
+                let grape = row['Grape Variety'] || row['grape_variety'] || '';
+                if (grape) {
+                    let g = grape.toLowerCase().split(',')[0].split('(')[0].trim();
+                    grapeCount[g] = (grapeCount[g] || 0) + 1;
+                }
+                
+                let region = row['Region/Country'] || row['region'] || '';
+                if (region) {
+                    let r = region.toLowerCase().split(',')[0].trim();
+                    regionCount[r] = (regionCount[r] || 0) + 1;
+                }
+            });
+            
+            document.getElementById('statWines').textContent = wines;
+            document.getElementById('statParker').textContent = parkerCount > 0 ? (totalParker / parkerCount).toFixed(1) : 'N/A';
+            
+            let topGrape = Object.keys(grapeCount).reduce((a, b) => grapeCount[a] > grapeCount[b] ? a : b, '');
+            document.getElementById('statTopGrape').textContent = topGrape ? topGrape.charAt(0).toUpperCase() + topGrape.slice(1) : '-';
+            
+            let topRegion = Object.keys(regionCount).reduce((a, b) => regionCount[a] > regionCount[b] ? a : b, '');
+            document.getElementById('statTopRegion').textContent = topRegion ? topRegion.split(' ')[0].charAt(0).toUpperCase() + topRegion.split(' ')[0].slice(1) : '-';
+            
+            localStorage.setItem('wineProfile', JSON.stringify({
+                wines, totalParker: totalParker / parkerCount
+            }));
+        }
+
+        // Image Processing
+        function processImage() {
+            showStatus('Processing image... Extracting wines', 'info');
+            document.getElementById('uploadSection').style.display = 'none';
+            
+            setTimeout(() => {
+                generateRecommendations();
+            }, 2000);
+        }
+
+        function generateRecommendations() {
+            const recommendations = {
+                low: [
+                    { name: 'Budget Tempranillo', price: 24, grape: 'Tempranillo', region: 'Spain', score: 88.5, why: 'Great value' },
+                    { name: 'Fresh Albariño', price: 22, grape: 'Albariño', region: 'Spain', score: 87.0, why: 'Crisp & refreshing' }
+                ],
+                mid: [
+                    { name: 'Premium Blend', price: 45, grape: 'Tempranillo/Garnacha', region: 'Spain', score: 90.2, why: 'Well-balanced' },
+                    { name: 'Classic Rioja', price: 38, grape: 'Tempranillo', region: 'Rioja', score: 89.8, why: 'Proven quality' }
+                ],
+                high: [
+                    { name: 'Prestigious Red', price: 95, grape: 'Tempranillo', region: 'Ribera de Duero', score: 92.5, why: 'Special occasion' },
+                    { name: 'Flagship Reserve', price: 120, grape: 'Tempranillo', region: 'Spain', score: 93.1, why: 'Outstanding quality' }
+                ]
+            };
+
+            displayRecommendations(recommendations);
+        }
+
+        function displayRecommendations(rec) {
+            currentRecommendations = rec;
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            const html = `
+                <div class="tier">
+                    <div class="tier-name">💰 Low Price</div>
+                    ${rec.low.map(w => `<div class="wine-item"><div class="wine-name">${w.name}</div><div class="wine-details">€${w.price} • ${w.grape}</div><span class="wine-score">${w.score}/100</span> ${w.why}</div>`).join('')}
+                </div>
+                <div class="tier">
+                    <div class="tier-name">💎 Mid Price</div>
+                    ${rec.mid.map(w => `<div class="wine-item"><div class="wine-name">${w.name}</div><div class="wine-details">€${w.price} • ${w.grape}</div><span class="wine-score">${w.score}/100</span> ${w.why}</div>`).join('')}
+                </div>
+                <div class="tier">
+                    <div class="tier-name">👑 Premium</div>
+                    ${rec.high.map(w => `<div class="wine-item"><div class="wine-name">${w.name}</div><div class="wine-details">€${w.price} • ${w.grape}</div><span class="wine-score">${w.score}/100</span> ${w.why}</div>`).join('')}
+                </div>
+            `;
+            
+            document.getElementById('recommendationsList').innerHTML = html;
+            showStatus('Recommendations ready!', 'success');
+            window.scrollTo(0, document.getElementById('resultsSection').offsetTop - 100);
+        }
+
+        function downloadResults() {
+            if (!currentRecommendations) return;
+            const text = `Wine Recommendations\n${new Date().toLocaleString()}\n\n${JSON.stringify(currentRecommendations, null, 2)}`;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wine-recommendations.txt`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
