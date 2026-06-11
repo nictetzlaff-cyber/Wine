@@ -282,7 +282,7 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <script>
         let stream = null;
         let currentImage = null;
@@ -362,6 +362,16 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
+                    // Check if XLSX is loaded
+                    if (typeof XLSX === 'undefined') {
+                        showStatus('Loading Excel library... please try again', 'info', 'excelStatus');
+                        setTimeout(() => {
+                            // Retry after a moment
+                            reader.readAsArrayBuffer(file);
+                        }, 1000);
+                        return;
+                    }
+                    
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -371,6 +381,7 @@
                     showStatus('Excel file loaded successfully!', 'success', 'excelStatus');
                     document.getElementById('profileStats').classList.remove('hidden');
                 } catch (err) {
+                    console.error('Excel error:', err);
                     showStatus('Error reading Excel: ' + err.message, 'error', 'excelStatus');
                 }
             };
